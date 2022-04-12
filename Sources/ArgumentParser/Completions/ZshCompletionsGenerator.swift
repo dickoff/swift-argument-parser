@@ -139,7 +139,11 @@ extension ArgumentDefinition {
     var inputs: String
     switch update {
     case .unary:
-      inputs = ":\(valueName):\(zshActionString(commands))"
+      if self.isRepeatingPositional {
+        inputs = "*:\(valueName):\(zshActionString(commands))"
+      } else {
+        inputs = ":\(valueName):\(zshActionString(commands))"
+      }
     case .nullary:
       inputs = ""
     }
