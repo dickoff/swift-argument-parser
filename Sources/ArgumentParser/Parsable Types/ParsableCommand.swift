@@ -107,9 +107,10 @@ extension ParsableCommand {
     includeHidden: Bool = false,
     columns: Int? = nil
   ) -> String {
+    //TODO: Maybe I actually want to pass along search?
     HelpGenerator(
       commandStack: CommandParser(self).commandStack(for: subcommand),
-      visibility: includeHidden ? .hidden : .default)
+      visibility: includeHidden ? .hidden : .default, search: nil)
         .rendered(screenWidth: columns)
   }
 
@@ -123,9 +124,10 @@ extension ParsableCommand {
     for subcommand: ParsableCommand.Type,
     includeHidden: Bool = false
   ) -> String {
+    //TODO: Maybe I actually want to pass along search?
     HelpGenerator(
       commandStack: CommandParser(self).commandStack(for: subcommand),
-      visibility: includeHidden ? .hidden : .default)
+      visibility: includeHidden ? .hidden : .default, search: nil)
         .usage
   }
 

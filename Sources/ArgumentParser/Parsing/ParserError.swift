@@ -11,7 +11,7 @@
 
 /// Gets thrown while parsing and will be handled by the error output generation.
 enum ParserError: Error {
-  case helpRequested(visibility: ArgumentVisibility)
+  case helpRequested(visibility: ArgumentVisibility, search: String?)
   case versionRequested
   case dumpHelpRequested
   

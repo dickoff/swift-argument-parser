@@ -25,7 +25,7 @@ struct Math: ParsableCommand {
         // Pass an array to `subcommands` to set up a nested tree of subcommands.
         // With language support for type-level introspection, this could be
         // provided by automatically finding nested `ParsableCommand` types.
-        subcommands: [Add.self, Multiply.self, Statistics.self],
+        subcommands: [Add.self, Multiply.self, Statistics.self, Multiplex.self],
 
         // A default subcommand, when provided, is automatically selected if a
         // subcommand is not given on the command line.
@@ -75,6 +75,19 @@ extension Math {
             print(format(result, usingHex: options.hexadecimalOutput))
         }
     }
+  //TODO: RemoveMe
+  struct Multiplex: ParsableCommand {
+    static let configuration = CommandConfiguration(
+      abstract: "Print the product of the values. REMOVE ME",
+      aliases: [])
+    
+    @OptionGroup var options: Options
+    
+    mutating func run() {
+      let result = options.values.reduce(1, *)
+      print(format(result, usingHex: options.hexadecimalOutput))
+    }
+  }
 }
 
 // In practice, these nested types could be broken out into different files.

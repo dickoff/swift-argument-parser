@@ -36,8 +36,8 @@ enum MessageInfo {
 
       // Exit early on built-in requests
       switch e.parserError {
-      case .helpRequested(let visibility):
-        self = .help(text: HelpGenerator(commandStack: e.commandStack, visibility: visibility).rendered(screenWidth: columns))
+      case .helpRequested(let visibility, let search):
+        self = .help(text: HelpGenerator(commandStack: e.commandStack, visibility: visibility, search: search).rendered(screenWidth: columns))
         return
 
       case .dumpHelpRequested:
@@ -82,7 +82,7 @@ enum MessageInfo {
       parserError = .userValidationError(error)
     }
     
-    var usage = HelpGenerator(commandStack: commandStack, visibility: .default).usageMessage()
+    var usage = HelpGenerator(commandStack: commandStack, visibility: .default, search: nil).usageMessage()
     
     let commandNames = commandStack.map { $0._commandName }.joined(separator: " ")
     if let helpName = commandStack.getPrimaryHelpName() {
@@ -105,7 +105,7 @@ enum MessageInfo {
           if let command = command {
             commandStack = CommandParser(type.asCommand).commandStack(for: command)
           }
-          self = .help(text: HelpGenerator(commandStack: commandStack, visibility: .default).rendered(screenWidth: columns))
+          self = .help(text: HelpGenerator(commandStack: commandStack, visibility: .default, search: nil).rendered(screenWidth: columns))
         case .dumpRequest(let command):
           if let command = command {
             commandStack = CommandParser(type.asCommand).commandStack(for: command)
@@ -128,7 +128,7 @@ enum MessageInfo {
     } else if let parserError = parserError {
       let usage: String = {
         guard case ParserError.noArguments = parserError else { return usage }
-        return "\n" + HelpGenerator(commandStack: [type.asCommand], visibility: .default).rendered(screenWidth: columns)
+        return "\n" + HelpGenerator(commandStack: [type.asCommand], visibility: .default, search: nil).rendered(screenWidth: columns)
       }()
       let argumentSet = ArgumentSet(commandStack.last!, visibility: .default, parent: nil)
       let message = argumentSet.errorDescription(error: parserError) ?? ""

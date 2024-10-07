@@ -75,7 +75,7 @@ extension ParsableArguments {
     // Parse the command and unwrap the result if necessary.
     switch try self.asCommand.parseAsRoot(arguments) {
     case let helpCommand as HelpCommand:
-      throw ParserError.helpRequested(visibility: helpCommand.visibility)
+      throw ParserError.helpRequested(visibility: helpCommand.visibility, search: helpCommand.search)
     case let result as _WrappedParsableCommand<Self>:
       return result.options
     case var result as Self:
@@ -156,7 +156,7 @@ extension ParsableArguments {
     includeHidden: Bool = false,
     columns: Int? = nil
   ) -> String {
-    HelpGenerator(self, visibility: includeHidden ? .hidden : .default)
+    HelpGenerator(self, visibility: includeHidden ? .hidden : .default, search: nil)
       .rendered(screenWidth: columns)
   }
 
@@ -241,7 +241,7 @@ extension ParsableArguments {
   public static func usageString(
     includeHidden: Bool = false
   ) -> String {
-    HelpGenerator(self, visibility: includeHidden ? .hidden : .default).usage
+    HelpGenerator(self, visibility: includeHidden ? .hidden : .default, search: nil).usage
   }
 }
 

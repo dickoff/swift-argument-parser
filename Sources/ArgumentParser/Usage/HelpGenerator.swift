@@ -135,14 +135,17 @@ internal struct HelpGenerator {
   var abstract: String
   var usage: String
   var sections: [Section]
-  
-  init(commandStack: [ParsableCommand.Type], visibility: ArgumentVisibility) {
+  var search: String?
+ 
+  //TODO: Might need to recurse print command stacks, returning things that contain the string only?
+  init(commandStack: [ParsableCommand.Type], visibility: ArgumentVisibility, search: String?) {
     guard let currentCommand = commandStack.last else {
       fatalError()
     }
     
     let currentArgSet = ArgumentSet(currentCommand, visibility: visibility, parent: nil)
     self.commandStack = commandStack
+    self.search = search
 
     // Build the tool name and subcommand name from the command configuration
     var toolName = commandStack.map { $0._commandName }.joined(separator: " ")
@@ -169,15 +172,15 @@ internal struct HelpGenerator {
       }
       self.abstract += "\n\(currentCommand.configuration.discussion)"
     }
-
-    self.sections = HelpGenerator.generateSections(commandStack: commandStack, visibility: visibility)
+    //TODO: pass in search
+    self.sections = HelpGenerator.generateSections(commandStack: commandStack, visibility: visibility, search: search)
   }
 
-  init(_ type: ParsableArguments.Type, visibility: ArgumentVisibility) {
-    self.init(commandStack: [type.asCommand], visibility: visibility)
+  init(_ type: ParsableArguments.Type, visibility: ArgumentVisibility, search: String?) {
+    self.init(commandStack: [type.asCommand], visibility: visibility, search: search)
   }
 
-  private static func generateSections(commandStack: [ParsableCommand.Type], visibility: ArgumentVisibility) -> [Section] {
+  private static func generateSections(commandStack: [ParsableCommand.Type], visibility: ArgumentVisibility, search: String?) -> [Section] {
     guard !commandStack.isEmpty else { return [] }
 
     var positionalElements: [Section.Element] = []
@@ -252,7 +255,15 @@ internal struct HelpGenerator {
       case (.positional, _):
         positionalElements.append(element)
       default:
-        optionElements.append(element)
+        //TODO: Only add in if it matches?
+        if let search {
+          if element.abstract.contains(search) || element.label.contains(search) {
+            optionElements.append(element)
+          }
+        } else {
+          optionElements.append(element)
+        }
+        
       }
     }
 
@@ -261,11 +272,20 @@ internal struct HelpGenerator {
     // Create section for a grouping of subcommands.
     func subcommandSection(
       header: Section.Header, 
-      subcommands: [ParsableCommand.Type]
+      subcommands: [ParsableCommand.Type],
+      search: String?
     ) -> Section {
       let subcommandElements: [Section.Element] =
         subcommands.compactMap { command in
           guard command.configuration.shouldDisplay else { return nil }
+          if let search {
+            if !command.configuration.abstract.contains(search)
+                && !command._commandName.contains(search)
+                && !command.configuration.aliases.contains(where: {$0.contains(search)})
+            {
+              return nil
+            }
+          }
           var label = command._commandName
           for alias in command.configuration.aliases {
               label += ", \(alias)"
@@ -289,7 +309,8 @@ internal struct HelpGenerator {
       subcommands.append(
         subcommandSection(
           header: .subcommands,
-          subcommands: configuration.ungroupedSubcommands
+          subcommands: configuration.ungroupedSubcommands,
+          search: search
         )
       )
     }
@@ -300,7 +321,8 @@ internal struct HelpGenerator {
         .compactMap { group in
           return subcommandSection(
             header: .groupedSubcommands(group.name),
-            subcommands: group.subcommands
+            subcommands: group.subcommands,
+            search: search
           )
         }
     )

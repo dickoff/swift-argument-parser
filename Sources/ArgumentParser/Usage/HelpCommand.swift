@@ -21,6 +21,9 @@ struct HelpCommand: ParsableCommand {
   /// Capture and ignore any extra help flags given by the user.
   @Flag(name: [.short, .long, .customLong("help", withSingleDash: true)], help: .private)
   var help = false
+
+  @Option(name: [.short], help: "Search for a string in the commands help output")
+  var search : String?
   
   private(set) var commandStack: [ParsableCommand.Type] = []
   private(set) var visibility: ArgumentVisibility = .default
@@ -30,7 +33,7 @@ struct HelpCommand: ParsableCommand {
   mutating func run() throws {
     throw CommandError(
       commandStack: commandStack,
-      parserError: .helpRequested(visibility: visibility))
+      parserError: .helpRequested(visibility: visibility, search: search))
   }
   
   mutating func buildCommandStack(with parser: CommandParser) throws {
@@ -41,19 +44,23 @@ struct HelpCommand: ParsableCommand {
   func generateHelp(screenWidth: Int) -> String {
     HelpGenerator(
       commandStack: commandStack,
-      visibility: visibility)
+      visibility: visibility,
+      search: search)
       .rendered(screenWidth: screenWidth)
   }
   
   enum CodingKeys: CodingKey {
     case subcommands
     case help
+    case search
   }
   
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.subcommands = try container.decode([String].self, forKey: .subcommands)
     self.help = try container.decode(Bool.self, forKey: .help)
+    //TODO: needed?
+    self.search = try container.decode(String.self, forKey: .search)
   }
   
   init(commandStack: [ParsableCommand.Type], visibility: ArgumentVisibility) {
@@ -61,5 +68,7 @@ struct HelpCommand: ParsableCommand {
     self.visibility = visibility
     self.subcommands = commandStack.map { $0._commandName }
     self.help = false
+    //TODO: Needed?
+    self.search = search
   }
 }
