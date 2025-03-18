@@ -16,9 +16,20 @@ internal struct HelpGenerator {
 
   struct Section {
     struct Element: Hashable {
+      static func == (lhs: HelpGenerator.Section.Element, rhs: HelpGenerator.Section.Element) -> Bool {
+        return lhs.label == rhs.label
+        //TODO: really?
+      }
+      func hash(into hasher: inout Hasher) {
+        label.hash(into: &hasher)
+        abstract.hash(into: &hasher)
+        discussion?.hash(into: &hasher)
+      }
+      
       var label: String
       var abstract: String = ""
       var discussion: ArgumentDiscussion?
+      var command : ParsableCommand.Type?
 
       var paddedLabel: String {
         String(repeating: " ", count: HelpGenerator.helpIndent) + label
@@ -99,9 +110,19 @@ internal struct HelpGenerator {
             return "\n" + wrappedAbstract
           }
         }()
-        return paddedLabel
+        
+        var finalString = paddedLabel
           + renderedAbstract + "\n"
           + wrappedDiscussion
+        if let command {
+          let indent = String(repeating: " ", count: HelpGenerator.helpIndent*2)
+          var subCommandHelp = indent + HelpGenerator(commandStack: [command], visibility: ArgumentVisibility.default).rendered(screenWidth: screenWidth).replacingOccurrences(of: "\n", with: "\n" + indent)
+          for _ in 0..<HelpGenerator.helpIndent*2 {
+            subCommandHelp.removeLast()
+          }
+          finalString += subCommandHelp
+        }
+        return finalString
       }
     }
 
@@ -304,7 +325,8 @@ internal struct HelpGenerator {
           }
           return Section.Element(
             label: label,
-            abstract: command.configuration.abstract)
+            abstract: command.configuration.abstract,
+            command: command)
         }
 
       return Section(header: header, elements: subcommandElements)
